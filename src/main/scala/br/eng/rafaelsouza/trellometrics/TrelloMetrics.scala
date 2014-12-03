@@ -10,10 +10,10 @@ object TrelloMetrics {
   def actionsToIntervals(trelloActions: String) = {
     val actions = sortActionsByDate(trelloActions)
     val created = takeCreatedAction(actions)
-    val firstInterval = Interval(created.data.list.get.id, created.date)
+    val firstInterval = Interval(created.data.list.get.id, created.data.list.get.name, created.date)
     actions.drop(1).foldLeft(Seq(firstInterval)){
       (intervals: Seq[Interval], currentAction: Action) => {
-        updateLastInterval(intervals, currentAction.date) :+ Interval(currentAction.data.listAfter.id, currentAction.date)
+        updateLastInterval(intervals, currentAction.date) :+ Interval(currentAction.data.listAfter.id, currentAction.data.listAfter.name, currentAction.date)
       }
     }
   }
@@ -26,7 +26,7 @@ object TrelloMetrics {
   private def takeCreatedAction(actions: Seq[Action]):Action = actions.head
   
   private def sortActionsByDate(actions: String):Seq[Action] ={
-    TrelloMetricsParser.parseActions(actions).sortBy(x => x.date.getMillis).sortBy(x => x.date.getMillis)
+    TrelloMetricsParser.parseActions(actions).sortBy(_.date.getMillis)
   }
   
 }

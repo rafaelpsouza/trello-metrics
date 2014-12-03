@@ -8,6 +8,7 @@ case class Data(board: Board, card: Card, listAfter: TrelloList, listBefore: Tre
 case class TrelloList(id: String, name: String)
 case class Board(id: String, name: String)
 case class Card(id: String, name: String)
-case class Interval(listId: String, startDate: DateTime, endDate: Option[DateTime] = None) {
+
+case class Interval(listId: String, listName: String, startDate: DateTime, endDate: Option[DateTime] = None) {
   def period: Option[Long] = endDate.map(end => end.getMillis - startDate.getMillis)
 }
