@@ -1,24 +1,28 @@
 package br.eng.rafaelsouza.trellometrics
 
 
-object Main extends App{
+object Main extends App {
 
   val trelloMetrics = new TrelloMetrics()
 
-  runApp()
-
-  def runApp() = {
-    val doneList = trelloMetrics.getLists().filter(list => list.name.equalsIgnoreCase("DONE"))(0)
-    val cards = trelloMetrics.getListCards(doneList.id)
-    cards.foreach(card => showTimeSpent(card.id))
+  if(args.length == 4){
+    runApp(args(0), args(1), args(2), args(3))
+  }else{
+    printUsage
   }
 
-  def showTimeSpent(cardId : String): Unit = {
+  def runApp(boardId: String, listName: String, token: String, key: String) = {
+    val doneList = trelloMetrics.getLists(boardId, token, key).filter(list => list.name.equalsIgnoreCase(listName))(0)
+    val cards = trelloMetrics.getListCards(doneList.id, token, key)
+    cards.foreach(card => showTimeSpent(card.id, token, key))
+  }
+
+  def showTimeSpent(cardId : String, token: String, key: String): Unit = {
     println("--------------------------------------------------------------")
-    val card = trelloMetrics.getCard(cardId)
+    val card = trelloMetrics.getCard(cardId, token, key)
     println(s"Card: ${card.name}")
     println("Spent time per list: ")
-    val intervals = trelloMetrics.actionsToIntervals(cardId)
+    val intervals = trelloMetrics.actionsToIntervals(cardId, token, key)
     intervals.map(i => println(s"${i.listName}: ${msToHour(i.period)} hours"))
     println("--------------------------------------------------------------")
   }
@@ -28,7 +32,7 @@ object Main extends App{
   }
 
   def printUsage() = {
-    println("java -jar xxx.jar token")
+    println("./trello-metrics boardId listName token key")
   }
 
 }

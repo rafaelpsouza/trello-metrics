@@ -6,27 +6,27 @@ import org.joda.time.DateTime
 
 class TrelloMetrics(trelloGateway: TrelloGateway = new TrelloGateway()) {
 
-  def actionsToIntervals(cardId: String) = {
-    val actions = sortActionsByDate(trelloGateway.listCardActions(cardId))
-    val created = takeCreatedAction(actions)
-    val firstInterval = Interval(created.data.list.get.id, created.data.list.get.name, created.date)
-    actions.drop(1).foldLeft(Seq(firstInterval)){
+  def actionsToIntervals(cardId: String, token: String, key: String) = {
+    val actions = sortActionsByDate(trelloGateway.listCardActions(cardId, token, key))
+    val firstInterval = Interval(actions.head.data.listBefore.id, actions.head.data.listBefore.name, getCreatedDate(cardId))
+
+    actions.foldLeft(Seq(firstInterval)){
       (intervals: Seq[Interval], currentAction: Action) => {
         updateLastInterval(intervals, currentAction.date) :+ Interval(currentAction.data.listAfter.id, currentAction.data.listAfter.name, currentAction.date)
       }
     }
   }
 
-  def getCard(cardId: String): Card = {
-    TrelloMetricsParser.parseCard(trelloGateway.getCard(cardId))
+  def getCard(cardId: String, token: String, key: String): Card = {
+    TrelloMetricsParser.parseCard(trelloGateway.getCard(cardId, token, key))
   }
 
-  def getLists(): List[TrelloList] = {
-    TrelloMetricsParser.parseBoardLists(trelloGateway.getBoardLists())
+  def getLists(boardId: String, token: String, key: String): List[TrelloList] = {
+    TrelloMetricsParser.parseBoardLists(trelloGateway.getBoardLists(boardId, token, key))
   }
 
-  def getListCards(listId: String): List[Card] = {
-    TrelloMetricsParser.parseListCards(trelloGateway.getListCards(listId))
+  def getListCards(listId: String, token: String, key: String): List[Card] = {
+    TrelloMetricsParser.parseListCards(trelloGateway.getListCards(listId, token, key))
   }
 
   private def updateLastInterval(intervals: Seq[Interval], endDate: DateTime): Seq[Interval] = {
@@ -34,7 +34,10 @@ class TrelloMetrics(trelloGateway: TrelloGateway = new TrelloGateway()) {
     intervals.take(intervals.length - 1) :+ lastInterval
   }
 
-  private def takeCreatedAction(actions: Seq[Action]):Action = actions.head
+  private def getCreatedDate(cardId: String):DateTime = {
+    val unixTimestamp = Integer.parseInt(cardId.substring(0, 8), 16)
+    new DateTime(unixTimestamp * 1000L)
+  }
 
   private def sortActionsByDate(actions: String):Seq[Action] ={
     TrelloMetricsParser.parseActions(actions).sortBy(_.date.getMillis)
